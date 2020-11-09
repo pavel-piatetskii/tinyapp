@@ -16,5 +16,8 @@
     "url": "https://github.com/pavel-piatetskii/tinyapp/issues"
   },
   "homepage": "https://github.com/pavel-piatetskii/tinyapp#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
