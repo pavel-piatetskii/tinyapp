@@ -9,12 +9,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.get("/", (req, res) => {
+
+// ---------------------- Route handlers ---------------------- //
+
+app.get("/", (req, res) => {  // '/'
   res.send("Hello!");
 });
 
-app.get("/hello", (req, res) => {
+app.get("/hello", (req, res) => { // '/hello'
   res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+app.get("/urls", (req, res) => { // '/urls'
+  const templateVars = {urls: urlDatabase};
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls.json", (req, res) => {
