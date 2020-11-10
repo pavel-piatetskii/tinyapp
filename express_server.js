@@ -40,6 +40,15 @@ app.get('/urls/new', (req, res) => {  // '/urls/new'
 res.render('urls_new');
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  if (longURL in urlDatabase) {
+    res.redirect(longURL);
+  }
+  res.statusCode = 404;
+  res.end("Requested Tiny URL Not Found");
+});
+
 app.get('/urls/:shortURL', (req, res) => { // '/urls/:shortURL'
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render('urls_show', templateVars);
@@ -49,8 +58,10 @@ app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
-// POST handler for new URL submition
+
+// ------ POST handler for new URL submition -----
 app.post('/urls', (req, res) => {
+
   // generate new 6-char alphanumerical string. If exists - generate again
   const shortURL = generateRandomString(6);
   while (shortURL in urlDatabase) {
