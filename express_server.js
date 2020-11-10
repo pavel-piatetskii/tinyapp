@@ -12,6 +12,9 @@ const urlDatabase = {
 
 // ---------------------- Route handlers ---------------------- //
 
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({extended: true}));
+
 app.get("/", (req, res) => {  // '/'
   res.send("Hello!");
 });
@@ -23,6 +26,10 @@ app.get("/hello", (req, res) => { // '/hello'
 app.get("/urls", (req, res) => { // '/urls'
   const templateVars = {urls: urlDatabase};
   res.render("urls_index", templateVars);
+});
+
+app.get("/urls/new", (req, res) => {  // '/urls/new'
+res.render("urls_new");
 });
 
 app.get("/urls/:shortURL", (req, res) => { // '/urls/:shortURL'
