@@ -77,12 +77,17 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${shortURL}`)
 });
 
+// The handler for update of a short URL -----
+app.post('/urls/:shortURL', (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  res.redirect('/urls');
+});
 
 // The handler for removal of a short URL -----
 app.post('/urls/:shortURL/delete', (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
-})
+});
 
 // ------ Listener
 app.listen(PORT, () => {
