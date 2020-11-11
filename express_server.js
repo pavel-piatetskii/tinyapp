@@ -18,13 +18,16 @@ function generateRandomString(size) {
   return output;
 };
 
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({extended: true}));
+
+const morgan = require('morgan');
+app.use(morgan('dev'));
 
 // ---------------------- ROUTE HANDLERS ---------------------- //
 
 // --------- GET Handlers
 
-const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({extended: true}));
 
 const cookie = require('cookie-parser');
 app.use(cookie())
