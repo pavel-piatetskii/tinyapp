@@ -10,5 +10,15 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
+    <% if (username) { %>
+    <h5 style="color: whitesmoke;"><%= `${username}` %></h5>
+    <% } else { %>
+      <form class="form-horizontal" action="/login" method="POST">
+        <div class="form-group mb-2">
+          <input class="form-horizontal" type="text" name="username" placeholder=" Enter username" style="width: 150px; height: calc(2.25rem + 2px); border-radius: .25rem; border-width: 0.5px;">
+          <button type="submit" class="btn btn-primary">Sign in</button>
+        </div>
+      </form>
+    <% } %> 
   </nav>
 </header>

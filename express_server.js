@@ -26,20 +26,28 @@ function generateRandomString(size) {
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
 
+const cookie = require('cookie-parser');
+app.use(cookie())
+
 app.get('/', (req, res) => {  // '/'
   res.send('Hello!');
+  console.log(req.cookies)
 });
 
 app.get('/urls', (req, res) => { // '/urls'
-  const templateVars = {urls: urlDatabase};
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render('urls_index', templateVars);
 });
 
 app.get('/urls/new', (req, res) => {  // '/urls/new'
-res.render('urls_new');
+const templateVars = {username: req.cookies["username"]}
+res.render('urls_new', templateVars);
 });
 
-app.get("/u/:shortURL", (req, res) => {
+app.get("/u/:shortURL", (req, res) => { // Redirection using short URL
   const longURL = urlDatabase[req.params.shortURL];
   if (longURL in urlDatabase) {
     res.redirect(longURL);
@@ -51,7 +59,8 @@ app.get("/u/:shortURL", (req, res) => {
 app.get('/urls/:shortURL', (req, res) => { // '/urls/:shortURL'
   const templateVars = { 
     shortURL: req.params.shortURL,
-    longURL:  urlDatabase[req.params.shortURL]
+    longURL:  urlDatabase[req.params.shortURL],
+    username: req.cookies["username"]
   };
   res.render('urls_show', templateVars);
 });
@@ -88,6 +97,13 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
 });
+
+// The handler for User LoginL -----
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username);
+  res.redirect('/urls');
+});
+
 
 // ------ Listener
 app.listen(PORT, () => {
