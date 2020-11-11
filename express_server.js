@@ -18,26 +18,27 @@ function generateRandomString(size) {
   return output;
 };
 
+// ----------------------- MIDDLEWARE ADDITIION ---------------------- //
+
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
 
 const morgan = require('morgan');
 app.use(morgan('dev'));
 
-// ---------------------- ROUTE HANDLERS ---------------------- //
+const cookie = require('cookie-parser');
+app.use(cookie());
+
+// -------------------------- ROUTE HANDLERS -------------------------- //
 
 // --------- GET Handlers
 
-
-const cookie = require('cookie-parser');
-app.use(cookie())
-
-app.get('/', (req, res) => {  // '/'
+app.get('/', (req, res) => {                  // '/'
   res.send('Hello!');
   console.log(req.cookies)
 });
 
-app.get('/urls', (req, res) => { // '/urls'
+app.get('/urls', (req, res) => {              // '/urls'
   const templateVars = {
     urls: urlDatabase,
     username: req.cookies["username"]
@@ -45,12 +46,27 @@ app.get('/urls', (req, res) => { // '/urls'
   res.render('urls_index', templateVars);
 });
 
-app.get('/urls/new', (req, res) => {  // '/urls/new'
-const templateVars = {username: req.cookies["username"]}
+app.get('/urls/new', (req, res) => {          // '/urls/new'
+const templateVars = {
+  username: req.cookies["username"]
+};
 res.render('urls_new', templateVars);
 });
 
-app.get("/u/:shortURL", (req, res) => { // Redirection using short URL
+app.get('/urls/:shortURL', (req, res) => {    // '/urls/:shortURL'
+const templateVars = { 
+  shortURL: req.params.shortURL,
+  longURL:  urlDatabase[req.params.shortURL],
+  username: req.cookies["username"]
+};
+res.render('urls_show', templateVars);
+});
+
+app.get('/urls.json', (req, res) => {         // Return URL DB as JSON
+  res.json(urlDatabase);
+});
+
+app.get("/u/:shortURL", (req, res) => {       // Redirection using short URL
   const longURL = urlDatabase[req.params.shortURL];
   if (longURL in urlDatabase) {
     res.redirect(longURL);
@@ -59,24 +75,16 @@ app.get("/u/:shortURL", (req, res) => { // Redirection using short URL
   res.end("Requested Tiny URL Not Found");
 });
 
-app.get('/urls/:shortURL', (req, res) => { // '/urls/:shortURL'
-  const templateVars = { 
-    shortURL: req.params.shortURL,
-    longURL:  urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
-  };
-  res.render('urls_show', templateVars);
+app.get('/register', (req, res) => {          // '/register'
+const templateVars = {
+  username: req.cookies["username"]
+};
+res.render('register', templateVars);
 });
-
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
-});
-
 
 // -------- POST handlers 
 
-// The handler for new URL submition -----
-app.post('/urls', (req, res) => {
+app.post('/urls', (req, res) => {                   // new URL submition
 
   // generate new 6-char alphanumerical string. If exists - generate again
   const shortURL = generateRandomString(6);
@@ -89,31 +97,29 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${shortURL}`)
 });
 
-// The handler for update of a short URL -----
-app.post('/urls/:shortURL', (req, res) => {
+app.post('/urls/:shortURL', (req, res) => {         // change a long URL for short URL
   urlDatabase[req.params.shortURL] = req.body.longURL;
   res.redirect('/urls');
 });
 
-// The handler for removal of a short URL -----
-app.post('/urls/:shortURL/delete', (req, res) => {
+app.post('/urls/:shortURL/delete', (req, res) => {  // delete a short URL
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
 });
 
-// The handler for User Login -----
-app.post('/login', (req, res) => {
+app.post('/login', (req, res) => {                  // User Login
   res.cookie('username', req.body.username);
   res.redirect('/urls');
 });
 
-// The handler for User Logout -----
-app.post('/logout', (req, res) => {
+app.post('/logout', (req, res) => {                 // User Logout
   res.clearCookie('username');
   res.redirect('/urls');
 });
 
-// ------ Listener
+
+// ---------------------- LISTENER ---------------------- //
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
