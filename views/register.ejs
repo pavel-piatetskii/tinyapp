@@ -12,7 +12,7 @@
 
   <body>
     <%- include('../partials/_header') %>
-    <form class="form-horizontal" action="/register>" method="POST"></form>
+    <form class="form-horizontal" action="/register" method="POST">
       <table class="table">
         <thead>
           <tr>
@@ -39,9 +39,14 @@
               </div>
             </td>
           </tr>
+          <tr>
+            <td></td>
+            <td style="text-align: center;">
+              <button type="submit" class="btn btn-primary">Register!</button>
+            </td>
+          </tr>
         </tbody>
       </table>
-      <button type="submit" class="btn btn-primary">Submit</button>
     </form>
       <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
