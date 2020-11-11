@@ -11,7 +11,12 @@
       </div>
     </div>
     <% if (username) { %>
-    <h5 style="color: whitesmoke;"><%= `${username}` %></h5>
+    <h5 style="color: whitesmoke; margin: 10px;">Logged in as: <b><%= `${username}` %></b></h5>
+    <form class="form-horizontal" action="/logout" method="POST">
+      <div class="form-group mb-2">
+        <button type="submit" class="btn btn-danger">Logout</button>
+      </div>
+    </form> 
     <% } else { %>
       <form class="form-horizontal" action="/login" method="POST">
         <div class="form-group mb-2">

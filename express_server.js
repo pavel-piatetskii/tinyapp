@@ -98,12 +98,17 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-// The handler for User LoginL -----
+// The handler for User Login -----
 app.post('/login', (req, res) => {
   res.cookie('username', req.body.username);
   res.redirect('/urls');
 });
 
+// The handler for User Logout -----
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.redirect('/urls');
+});
 
 // ------ Listener
 app.listen(PORT, () => {
