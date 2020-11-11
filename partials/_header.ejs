@@ -10,8 +10,8 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if (username) { %>
-    <h5 style="color: whitesmoke; margin: 10px;">Logged in as: <b><%= `${username}` %></b></h5>
+    <% if (user) { %>
+    <h5 style="color: whitesmoke; margin: 10px;">Logged in as: <b><%= `${user.email}` %></b></h5>
     <form class="form-horizontal" action="/logout" method="POST">
       <div class="form-group mb-2">
         <button type="submit" class="btn btn-danger">Logout</button>
