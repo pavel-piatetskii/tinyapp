@@ -22,6 +22,13 @@ const users = {
     return id;
   },
 
+  findEmail(email) {
+    for (const user in this) {
+      if (users[user].email === email) return users[user].id;
+    }
+    return false;
+  }
+
 };
 
 function generateRandomString(size) {
@@ -127,7 +134,8 @@ app.post('/urls/:shortURL/delete', (req, res) => {  // delete a short URL
 });
 
 app.post('/login', (req, res) => {                  // User Login
-  res.cookie('username', req.body.username);
+  const id = users.findEmail(req.body.email);
+  res.cookie('user_id', id);
   res.redirect('/urls');
 });
 
