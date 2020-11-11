@@ -4,9 +4,23 @@ const PORT = 8080; // default port 8080
 
 app.set('view engine', 'ejs');
 
+// ---------------- Database-objects and helper functions ------------ //
+
 const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com'
+};
+
+const users = {
+
+  addUser(input) {
+    const id = generateRandomString(6);
+    while (id in this) id = generateRandomString(6);
+
+    const { email, password } = input;
+    this[id] = { id, email, password };
+    return id;
+  },
 };
 
 function generateRandomString(size) {
@@ -66,6 +80,10 @@ app.get('/urls.json', (req, res) => {         // Return URL DB as JSON
   res.json(urlDatabase);
 });
 
+app.get('/users.json', (req, res) => {         // Return users DB as JSON
+  res.json(users);
+});
+
 app.get("/u/:shortURL", (req, res) => {       // Redirection using short URL
   const longURL = urlDatabase[req.params.shortURL];
   if (longURL in urlDatabase) {
@@ -117,6 +135,11 @@ app.post('/logout', (req, res) => {                 // User Logout
   res.redirect('/urls');
 });
 
+app.post('/register', (req, res) => {                  // User Registration
+  const id = users.addUser(req.body);
+  res.cookie('user_id', id);
+  res.redirect('/urls');
+});
 
 // ---------------------- LISTENER ---------------------- //
 
