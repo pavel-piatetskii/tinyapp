@@ -84,33 +84,43 @@ app.use(morgan('dev'));
 const cookie = require('cookie-parser');
 app.use(cookie());
 
+const isLoggedMW = function(req, res, next) {
+  const id = req.cookies['user_id'];
+  if (id in users) {
+    req.id = id;
+    return next();
+  }
+  res.redirect('/login');
+};
+
+const isAuthorizedMW = function(req, res, next) {
+  const id = req.cookies['user_id'];
+  if (id in users) {
+    req.id = id;
+    return next();
+  }
+  res.redirect('/not-logged-in');
+};
+
 // -------------------------- ROUTE HANDLERS -------------------------- //
 
 // --------- GET Handlers
 
-app.get('/', (req, res) => {                        // '/'
-  const id = req.cookies['user_id'];
-  if (!users.isLogIn(id)) return res.redirect('/login');
+app.get('/', isLoggedMW, (req, res) => {                        // '/'
   res.redirect('/urls');
 });
 
-app.get('/urls', (req, res) => {                    // '/urls'
-  const id = req.cookies['user_id'];
-  if (!users.isLogIn(id)) return res.redirect('/not-logged-in');
-
+app.get('/urls', isAuthorizedMW, (req, res) => {                    // '/urls'
   const templateVars = {
-      urls: urlDatabase.urlsForUser(id),
-      user: users[id]
+      urls: urlDatabase.urlsForUser(req.id),
+      user: users[req.id],
     };
   res.render('urls_index', templateVars);
 });
 
-app.get('/urls/new', (req, res) => {                // '/urls/new'
-  const id = req.cookies['user_id'];
-  if (!users.isLogIn(id)) return res.redirect('/not-logged-in');
-
+app.get('/urls/new', isAuthorizedMW, (req, res) => {                // '/urls/new'
   const templateVars = {
-    user: users[id]
+    user: users[req.id]
   };
   res.render('urls_new', templateVars);
 });
