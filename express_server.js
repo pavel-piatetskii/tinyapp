@@ -58,9 +58,9 @@ const users = {
     const id = generateRandomString(6);
     while (id in this) id = generateRandomString(6);
 
-    const { email, password } = input;
-    const passHashed = bcrypt.hashSync(password, 10)
-    this[id] = { id, email, passHashed };
+    let { email, password } = input;
+    password = bcrypt.hashSync(password, 10)
+    this[id] = { id, email, password };
     return id;
   },
 
@@ -224,13 +224,13 @@ app.post('/login', (req, res) => {                  // User Login
   if (!id) {
     return res.status(403).send('E-mail and password do not match');
   }
-  console.log(users[id].password !== password);
-  if (users[id].password !== password) {
-    return res.status(403).send('E-mail and password do not match');
+  
+  if (bcrypt.compareSync(password, users[id].password)) {
+    res.cookie('user_id', id);
+    return res.redirect('/urls');
   }
+  return res.status(403).send('E-mail and password do not match');
 
-  res.cookie('user_id', id);
-  res.redirect('/urls');
 });
 
 app.post('/logout', (req, res) => {                 // User Logout
