@@ -132,8 +132,9 @@ app.get('/urls/:shortURL', (req, res) => {          // '/urls/:shortURL'
 });
 
 app.get('/not-logged-in', (req, res) => {
+  const id = req.cookies['user_id'];
   const templateVars = { 
-    user: undefined
+    user: users[id]
   };
   res.render('not-logged-in', templateVars)
 });
