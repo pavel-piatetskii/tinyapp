@@ -11,7 +11,12 @@
 <body>
   <%- include ('../partials/_header') %> 
   <main style='margin: 1em;'>
-    <h3>My URLs</h3>
+      <h3 style="text-align: left;">My URLs</h3>
+      <form class="form-horizontal" action="/urls/new" method="GET">
+        <div class="form-group mb-2">
+          <button type="submit" class="btn btn-primary">Add New</button>
+        </div>
+      </form>
     <table class="table">
       <thead>
         <tr>

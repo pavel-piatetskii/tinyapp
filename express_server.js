@@ -69,8 +69,13 @@ app.get('/urls', (req, res) => {                    // '/urls'
 });
 
 app.get('/urls/new', (req, res) => {                // '/urls/new'
-const templateVars = {
-  user: users[req.cookies['user_id']]
+  const id = req.cookies['user_id'];
+
+  // Redirect user to login page if not authorised
+  if (!(id in users)) return res.redirect('/login')
+
+  const templateVars = {
+    user: users[id]
 };
 res.render('urls_new', templateVars);
 });
