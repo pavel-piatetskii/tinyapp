@@ -89,8 +89,9 @@ app.use(cookie());
 // --------- GET Handlers
 
 app.get('/', (req, res) => {                        // '/'
-  res.send('Hello!');
-  console.log(req.cookies)
+  const id = req.cookies['user_id'];
+  if (!users.isLogIn(id)) return res.redirect('/login');
+  res.redirect('/urls');
 });
 
 app.get('/urls', (req, res) => {                    // '/urls'

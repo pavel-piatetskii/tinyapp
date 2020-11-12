@@ -1,16 +1,16 @@
 <header>
-  <nav class="navbar navbar-expand-md navbar-dark bg-success">
-    <a class="navbar-brand" href="/urls">TinyApp</a>
+  <nav class="navbar navbar-expand-md navbar-dark bg-success justify-content-between">
+    <a class="navbar-brand" href="/">TinyApp</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
+    <% if (user) { %>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if (user) { %>
     <h5 style="color: whitesmoke; margin: 10px;">Logged in as: <b><%= `${user.email}` %></b></h5>
     <form class="form-horizontal" action="/logout" method="POST">
       <div class="form-group mb-2">
@@ -18,17 +18,19 @@
       </div>
     </form> 
     <% } else { %>
+      <div style="display: flex;">
       <form class="form-horizontal" action="/login" method="GET">
         <div class="form-group mb-2">
           <button type="submit" class="btn btn-primary">Login</button>
         </div>
       </form>
       <h2 style="margin-left: 5px; margin-right: 5px; color: whitesmoke;"> | </h2>
-      <form class="form-horizontal" action="/register" method="GET">
+      <form class="form-horizontal"action="/register" method="GET">
         <div class="form-group mb-2">
           <button type="submit" class="btn btn-warning">Register</button>
         </div>
       </form>
+      </div>
     <% } %> 
   </nav>
 </header>
