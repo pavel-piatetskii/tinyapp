@@ -26,6 +26,7 @@ const urlDatabase = {
     return output;
   },
 
+
   changeURL(shortURL, newLongURL, id) {
     if (this[shortURL].userID === id) {
       this[shortURL].longURL = newLongURL;
@@ -59,8 +60,8 @@ const users = {
     return false;
   },
 
-  isLogIn(id) {                           // Check if a user has logged in
-    return (id in this) ? true : false;
+  isUser(id) {
+    return (id in this) ? id : false;
   }
 };
 
@@ -85,21 +86,13 @@ const cookie = require('cookie-parser');
 app.use(cookie());
 
 const isLoggedMW = function(req, res, next) {
-  const id = req.cookies['user_id'];
-  if (id in users) {
-    req.id = id;
-    return next();
-  }
-  res.redirect('/login');
+  req.id = users.isUser(req.cookies['user_id']);
+  return (req.id) ? next() : res.redirect('/login');
 };
 
 const isAuthorizedMW = function(req, res, next) {
-  const id = req.cookies['user_id'];
-  if (id in users) {
-    req.id = id;
-    return next();
-  }
-  res.redirect('/not-logged-in');
+  req.id = users.isUser(req.cookies['user_id']);
+  return (req.id) ? next() : res.redirect('//not-authorized');
 };
 
 // -------------------------- ROUTE HANDLERS -------------------------- //
@@ -125,29 +118,27 @@ app.get('/urls/new', isAuthorizedMW, (req, res) => {                // '/urls/ne
   res.render('urls_new', templateVars);
 });
 
-app.get('/urls/:shortURL', (req, res) => {          // '/urls/:shortURL'
- 
-  const id = req.cookies['user_id'];
+app.get('/urls/:shortURL', isAuthorizedMW, (req, res) => {          // '/urls/:shortURL'
   const { shortURL } = req.params;
-  
-  if (!users.isLogIn(id) || urlDatabase[shortURL].userID !== id) {
-    return res.redirect('/not-logged-in');
+  const url = urlDatabase[shortURL];
+  if (!url || url.userID !== req.id) {
+    return res.redirect('/not-authorized');
   }
 
   const templateVars = { 
     shortURL,
-    longURL:  urlDatabase[shortURL].longURL,
-    user: users[id]
+    longURL:  url.longURL,
+    user: users[req.id]
   };
   res.render('urls_show', templateVars);
 });
 
-app.get('/not-logged-in', (req, res) => {
+app.get('/not-authorized', (req, res) => {
   const id = req.cookies['user_id'];
   const templateVars = { 
     user: users[id]
   };
-  res.render('not-logged-in', templateVars)
+  res.render('not-authorized', templateVars)
 });
 
 app.get('/urls.json', (req, res) => {               // Return URL DB as JSON
@@ -168,10 +159,10 @@ app.get("/u/:shortURL", (req, res) => {             // Redirection using short U
 });
 
 app.get('/login', (req, res) => {                   // '/login'
-const templateVars = {
-  user: users[req.cookies['user_id']]
-};
-res.render('login', templateVars);
+  const templateVars = {
+    user: users[req.cookies['user_id']]
+  };
+  res.render('login', templateVars);
 });
 
 app.get('/register', (req, res) => {                // '/register'
