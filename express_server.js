@@ -24,7 +24,14 @@ const urlDatabase = {
       if (this[url].userID === id) output[url] = this[url].longURL;
     }
     return output;
-  }
+  },
+
+  deleteURL(shortURL, id) {
+    console.log(this[shortURL].userID, id )
+    if (this[shortURL].userID === id ) {
+      delete this[shortURL];
+    }
+  },
 };
 
 const users = {
@@ -45,8 +52,11 @@ const users = {
       if (users[user].email === email) return users[user].id;
     }
     return false;
-  }
+  },
 
+  isLogIn(id) {                           // Check if a user has logged in
+    return (id in this) ? true : false;
+  }
 };
 
 function generateRandomString(size) {
@@ -79,34 +89,45 @@ app.get('/', (req, res) => {                        // '/'
 });
 
 app.get('/urls', (req, res) => {                    // '/urls'
-const id = req.cookies['user_id'];
-const templateVars = {
-    urls: urlDatabase.urlsForUser(id),
-    user: users[id]
-  };
+  const id = req.cookies['user_id'];
+  if (!users.isLogIn(id)) return res.redirect('/not-logged-in');
+
+  const templateVars = {
+      urls: urlDatabase.urlsForUser(id),
+      user: users[id]
+    };
   res.render('urls_index', templateVars);
 });
 
 app.get('/urls/new', (req, res) => {                // '/urls/new'
   const id = req.cookies['user_id'];
-
-  // Redirect user to login page if not authorised
-  if (!(id in users)) return res.redirect('/login')
+  if (!users.isLogIn(id)) return res.redirect('/not-logged-in');
 
   const templateVars = {
     user: users[id]
-};
-res.render('urls_new', templateVars);
+  };
+  res.render('urls_new', templateVars);
 });
 
 app.get('/urls/:shortURL', (req, res) => {          // '/urls/:shortURL'
-const { shortURL } = req.params;
-const templateVars = { 
-  shortURL,
-  longURL:  urlDatabase[shortURL].longURL,
-  user: users[req.cookies['user_id']]
-};
-res.render('urls_show', templateVars);
+ 
+  const id = req.cookies['user_id'];
+  if (!users.isLogIn(id)) return res.redirect('/not-logged-in');
+
+  const { shortURL } = req.params;
+  const templateVars = { 
+    shortURL,
+    longURL:  urlDatabase[shortURL].longURL,
+    user: users[id]
+  };
+  res.render('urls_show', templateVars);
+});
+
+app.get('/not-logged-in', (req, res) => {
+  const templateVars = { 
+    user: undefined
+  };
+  res.render('not-logged-in', templateVars)
 });
 
 app.get('/urls.json', (req, res) => {               // Return URL DB as JSON
@@ -152,12 +173,15 @@ app.post('/urls', (req, res) => {                   // new URL submition
 });
 
 app.post('/urls/:shortURL', (req, res) => {         // change a long URL for short URL
+  const id = req.cookies['user_id'];
   urlDatabase[req.params.shortURL] = req.body.longURL;
   res.redirect('/urls');
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {  // delete a short URL
-  delete urlDatabase[req.params.shortURL];
+  const shortURL = req.params.shortURL;
+  const id = req.cookies['user_id'];
+  urlDatabase.deleteURL(shortURL, id);
   res.redirect('/urls');
 });
 
