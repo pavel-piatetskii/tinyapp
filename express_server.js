@@ -26,9 +26,14 @@ const urlDatabase = {
     return output;
   },
 
+  changeURL(shortURL, newLongURL, id) {
+    if (this[shortURL].userID === id) {
+      this[shortURL].longURL = newLongURL;
+    }
+  },
+
   deleteURL(shortURL, id) {
-    console.log(this[shortURL].userID, id )
-    if (this[shortURL].userID === id ) {
+    if (this[shortURL].userID === id) {
       delete this[shortURL];
     }
   },
@@ -63,7 +68,7 @@ function generateRandomString(size) {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let output = '';
   for (let i = 0; i < size; i++) {
-    output += charset[Math.round(Math.random() * charset.length)];
+    output += charset[Math.floor(Math.random() * charset.length)];
   }
   return output;
 };
@@ -112,9 +117,12 @@ app.get('/urls/new', (req, res) => {                // '/urls/new'
 app.get('/urls/:shortURL', (req, res) => {          // '/urls/:shortURL'
  
   const id = req.cookies['user_id'];
-  if (!users.isLogIn(id)) return res.redirect('/not-logged-in');
-
   const { shortURL } = req.params;
+  
+  if (!users.isLogIn(id) || urlDatabase[shortURL].userID !== id) {
+    return res.redirect('/not-logged-in');
+  }
+
   const templateVars = { 
     shortURL,
     longURL:  urlDatabase[shortURL].longURL,
@@ -174,7 +182,9 @@ app.post('/urls', (req, res) => {                   // new URL submition
 
 app.post('/urls/:shortURL', (req, res) => {         // change a long URL for short URL
   const id = req.cookies['user_id'];
-  urlDatabase[req.params.shortURL] = req.body.longURL;
+  const shortURL = req.params.shortURL;
+  const newLongURL = req.body.longURL;
+  urlDatabase.changeURL(shortURL, newLongURL, id);
   res.redirect('/urls');
 });
 
@@ -210,7 +220,7 @@ app.post('/login', (req, res) => {                  // User Login
 
 app.post('/logout', (req, res) => {                 // User Logout
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 app.post('/register', (req, res) => {               // User Registration
