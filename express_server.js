@@ -145,7 +145,18 @@ app.post('/logout', (req, res) => {                 // User Logout
 });
 
 app.post('/register', (req, res) => {               // User Registration
-  const id = users.addUser(req.body);
+  const { email, password } = req.body;
+
+  // Check if registration fields are empty or email is registred
+  if (!email || !password) {
+    return res.status(400).send('E-mail and password fields cannot be empty');
+  }
+  if (users.findEmail(email)) {
+    return res.status(400).send('User with this e-mail is already registred');
+  }
+
+  // Create new user in DB, assign a cookie and forward to URLs page
+  const id = users.addUser({ email, password });
   res.cookie('user_id', id);
   res.redirect('/urls');
 });
