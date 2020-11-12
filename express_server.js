@@ -15,6 +15,15 @@ const urlDatabase = {
     while (shortURL in this) shortURL = generateRandomString(6);
 
     this[shortURL] = { longURL, userID };
+    return shortURL;
+  },
+
+  urlsForUser(id) {
+    const output = {};
+    for (const url in this) {
+      if (this[url].userID === id) output[url] = this[url].longURL;
+    }
+    return output;
   }
 };
 
@@ -70,9 +79,10 @@ app.get('/', (req, res) => {                        // '/'
 });
 
 app.get('/urls', (req, res) => {                    // '/urls'
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[req.cookies['user_id']]
+const id = req.cookies['user_id'];
+const templateVars = {
+    urls: urlDatabase.urlsForUser(id),
+    user: users[id]
   };
   res.render('urls_index', templateVars);
 });
@@ -134,14 +144,10 @@ res.render('register', templateVars);
 
 app.post('/urls', (req, res) => {                   // new URL submition
 
-  // generate new 6-char alphanumerical string. If exists - generate again
-  const shortURL = generateRandomString(6);
-  while (shortURL in urlDatabase) {
-    shortURL = generateRandomString(6);
-  }
-
-  // Save generated URL to DB and redirect to the ShortURL page
-  urlDatabase[shortURL] = req.body.longURL;
+  const longURL = req.body.longURL;
+  const id = req.cookies['user_id'];
+  
+  const shortURL = urlDatabase.addURL(longURL, id);
   res.redirect(`/urls/${shortURL}`)
 });
 
