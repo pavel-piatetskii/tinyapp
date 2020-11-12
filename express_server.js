@@ -11,6 +11,9 @@ const urlDatabase = {
   '9sm5xK': { longURL: 'http://www.google.com', userID: 'test' },
 
   addURL(longURL, userID) {
+
+    if (this.findLongURL) return false;
+
     const shortURL = generateRandomString(6);
     while (shortURL in this) shortURL = generateRandomString(6);
 
@@ -26,6 +29,12 @@ const urlDatabase = {
     return output;
   },
 
+  findLongURL(longURL) {
+    for (shortURL in this) {
+      if (this[shortURL].longURL === longURL) return shortURL;
+    }
+    return false;
+  },
 
   changeURL(shortURL, newLongURL, id) {
     if (this[shortURL].userID === id) {
@@ -180,6 +189,7 @@ app.post('/urls', (req, res) => {                   // new URL submition
   const id = req.cookies['user_id'];
   
   const shortURL = urlDatabase.addURL(longURL, id);
+  if (!shortURL) return res.status(400).send(`Tiny URL for this address exists: ${urlDatabase.findLongURL(longURL)}`)
   res.redirect(`/urls/${shortURL}`)
 });
 
