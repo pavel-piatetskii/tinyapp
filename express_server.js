@@ -7,11 +7,20 @@ app.set('view engine', 'ejs');
 // ---------------- Database-objects and helper functions ------------ //
 
 const urlDatabase = {
-  'b2xVn2': 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com'
+  'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'test' },
+  '9sm5xK': { longURL: 'http://www.google.com', userID: 'test' },
+
+  addURL(longURL, userID) {
+    const shortURL = generateRandomString(6);
+    while (shortURL in this) shortURL = generateRandomString(6);
+
+    this[shortURL] = { longURL, userID };
+  }
 };
 
 const users = {
+
+  'test': {id: 'test', email: 'a@b.c', password: '123'},
 
   addUser(input) {
     const id = generateRandomString(6);
@@ -81,9 +90,10 @@ res.render('urls_new', templateVars);
 });
 
 app.get('/urls/:shortURL', (req, res) => {          // '/urls/:shortURL'
+const { shortURL } = req.params;
 const templateVars = { 
-  shortURL: req.params.shortURL,
-  longURL:  urlDatabase[req.params.shortURL],
+  shortURL,
+  longURL:  urlDatabase[shortURL].longURL,
   user: users[req.cookies['user_id']]
 };
 res.render('urls_show', templateVars);
@@ -98,8 +108,8 @@ app.get('/users.json', (req, res) => {              // Return users DB as JSON
 });
 
 app.get("/u/:shortURL", (req, res) => {             // Redirection using short URL
-  const longURL = urlDatabase[req.params.shortURL];
-  if (longURL in urlDatabase) {
+  if (req.params.shortURL in urlDatabase) {
+    const { longURL } = urlDatabase[req.params.shortURL];
     res.redirect(longURL);
   }
   res.statusCode = 404;
@@ -114,8 +124,8 @@ res.render('login', templateVars);
 });
 
 app.get('/register', (req, res) => {                // '/register'
-const templateVars = {
-  user: users[req.cookies['user_id']]
+  const templateVars = {
+    user: users[req.cookies['user_id']]
 };
 res.render('register', templateVars);
 });
