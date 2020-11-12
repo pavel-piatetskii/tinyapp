@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcrypt')
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -58,7 +59,8 @@ const users = {
     while (id in this) id = generateRandomString(6);
 
     const { email, password } = input;
-    this[id] = { id, email, password };
+    const passHashed = bcrypt.hashSync(password, 10)
+    this[id] = { id, email, passHashed };
     return id;
   },
 
