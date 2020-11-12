@@ -55,12 +55,12 @@ app.use(cookie());
 
 // --------- GET Handlers
 
-app.get('/', (req, res) => {                  // '/'
+app.get('/', (req, res) => {                        // '/'
   res.send('Hello!');
   console.log(req.cookies)
 });
 
-app.get('/urls', (req, res) => {              // '/urls'
+app.get('/urls', (req, res) => {                    // '/urls'
   const templateVars = {
     urls: urlDatabase,
     user: users[req.cookies['user_id']]
@@ -68,14 +68,14 @@ app.get('/urls', (req, res) => {              // '/urls'
   res.render('urls_index', templateVars);
 });
 
-app.get('/urls/new', (req, res) => {          // '/urls/new'
+app.get('/urls/new', (req, res) => {                // '/urls/new'
 const templateVars = {
   user: users[req.cookies['user_id']]
 };
 res.render('urls_new', templateVars);
 });
 
-app.get('/urls/:shortURL', (req, res) => {    // '/urls/:shortURL'
+app.get('/urls/:shortURL', (req, res) => {          // '/urls/:shortURL'
 const templateVars = { 
   shortURL: req.params.shortURL,
   longURL:  urlDatabase[req.params.shortURL],
@@ -84,15 +84,15 @@ const templateVars = {
 res.render('urls_show', templateVars);
 });
 
-app.get('/urls.json', (req, res) => {         // Return URL DB as JSON
+app.get('/urls.json', (req, res) => {               // Return URL DB as JSON
   res.json(urlDatabase);
 });
 
-app.get('/users.json', (req, res) => {         // Return users DB as JSON
+app.get('/users.json', (req, res) => {              // Return users DB as JSON
   res.json(users);
 });
 
-app.get("/u/:shortURL", (req, res) => {       // Redirection using short URL
+app.get("/u/:shortURL", (req, res) => {             // Redirection using short URL
   const longURL = urlDatabase[req.params.shortURL];
   if (longURL in urlDatabase) {
     res.redirect(longURL);
@@ -101,14 +101,14 @@ app.get("/u/:shortURL", (req, res) => {       // Redirection using short URL
   res.end("Requested Tiny URL Not Found");
 });
 
-app.get('/login', (req, res) => {          // '/login'
+app.get('/login', (req, res) => {                   // '/login'
 const templateVars = {
   user: users[req.cookies['user_id']]
 };
 res.render('login', templateVars);
 });
 
-app.get('/register', (req, res) => {          // '/register'
+app.get('/register', (req, res) => {                // '/register'
 const templateVars = {
   user: users[req.cookies['user_id']]
 };
@@ -141,7 +141,24 @@ app.post('/urls/:shortURL/delete', (req, res) => {  // delete a short URL
 });
 
 app.post('/login', (req, res) => {                  // User Login
-  const id = users.findEmail(req.body.email);
+  const { email, password } = req.body;
+  
+  // Return 'Bad request' if email/password fields are empty
+  if (!email || !password) {
+    return res.status(400).send('E-mail and password fields cannot be empty');
+  }
+  
+  const id = users.findEmail(email);
+
+  // Forbid access if not registred or wrong password (same message for security reasons)
+  if (!id) {
+    return res.status(403).send('E-mail and password do not match');
+  }
+  console.log(users[id].password !== password);
+  if (users[id].password !== password) {
+    return res.status(403).send('E-mail and password do not match');
+  }
+
   res.cookie('user_id', id);
   res.redirect('/urls');
 });
