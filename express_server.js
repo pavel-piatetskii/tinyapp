@@ -101,6 +101,13 @@ app.get("/u/:shortURL", (req, res) => {       // Redirection using short URL
   res.end("Requested Tiny URL Not Found");
 });
 
+app.get('/login', (req, res) => {          // '/login'
+const templateVars = {
+  user: users[req.cookies['user_id']]
+};
+res.render('login', templateVars);
+});
+
 app.get('/register', (req, res) => {          // '/register'
 const templateVars = {
   user: users[req.cookies['user_id']]
