@@ -2,15 +2,13 @@ const bcrypt = require('bcrypt');
 // ---------------- Database-objects and helper functions ------------ //
 
 const urlDatabase = {
-  'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'test', counter: 0, unique: { 'ip': 'time'} },
-  '9sm5xK': { longURL: 'http://www.google.com', userID: 'test' },
 
   addURL(longURL, userID, db) {
     if (!db) db = this;
 
     if (db.findLongURL(longURL)) return false;
 
-    const shortURL = generateRandomString(6);
+    let shortURL = generateRandomString(6);
     while (shortURL in db) shortURL = generateRandomString(6);
 
     db[shortURL] = { longURL, userID, counter: 0, unique: {} };
@@ -28,7 +26,7 @@ const urlDatabase = {
 
   findLongURL(longURL, db) {
     if (!db) db = this;
-    for (shortURL in db) {
+    for (const shortURL in db) {
       if (db[shortURL].longURL === longURL) return shortURL;
     }
     return false;
@@ -59,15 +57,13 @@ const urlDatabase = {
 
 const users = {
 
-  'test': {id: 'test', email: 'a@b.c', password: '123'},
-
   addUser(input, db) {
     if (!db) db = this;
-    const id = generateRandomString(6);
+    let id = generateRandomString(6);
     while (id in db) id = generateRandomString(6);
   
     let { email, password } = input;
-    password = bcrypt.hashSync(password, 10)
+    password = bcrypt.hashSync(password, 10);
     db[id] = { id, email, password };
     return id;
   },
@@ -86,8 +82,8 @@ const users = {
   }
 };
 
-function generateRandomString(size) {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+const generateRandomString = function(size) {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let output = '';
   for (let i = 0; i < size; i++) {
     output += charset[Math.floor(Math.random() * charset.length)];
@@ -101,4 +97,4 @@ module.exports = {
   addUser: users.addUser,
   findEmail: users.findEmail,
 
-}
+};
