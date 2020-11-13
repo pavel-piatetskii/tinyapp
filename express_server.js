@@ -56,7 +56,7 @@ const isOwnerOfShortMW = function(req, res, next) {
 // --------- GET Handlers
 
 app.get('/', isLoggedMW, (req, res) => {                    // '/'
-  console.log(req.connection.remoteAddress.split(':').pop())
+  console.log()
   res.redirect('/urls');
 });
 
@@ -85,6 +85,8 @@ app.get('/urls/:shortURL', isAuthorizedMW, (req, res) => {  // '/urls/:shortURL'
   const templateVars = { 
     shortURL,
     longURL:  url.longURL,
+    counter:  url.counter,
+    unique:   url.unique,
     user: users[req.id]
   };
   res.render('urls_show', templateVars);
@@ -107,8 +109,12 @@ app.get('/users.json', (req, res) => {                      // Return users DB a
 });
 
 app.get("/u/:shortURL", (req, res) => {                     // Redirection using short URL
-  if (req.params.shortURL in urlDatabase) {
-    const { longURL } = urlDatabase[req.params.shortURL];
+  const ip = req.connection.remoteAddress.split(':').pop();
+  const shortURL = req.params.shortURL
+  if (shortURL in urlDatabase) {
+    const { longURL } = urlDatabase[shortURL];
+    console.log(shortURL, ip)
+    urlDatabase.countVisitors(shortURL, ip)
     return res.redirect(longURL);
   }
   res.statusCode = 404;

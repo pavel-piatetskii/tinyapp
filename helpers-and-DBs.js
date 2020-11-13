@@ -13,7 +13,7 @@ const urlDatabase = {
     const shortURL = generateRandomString(6);
     while (shortURL in db) shortURL = generateRandomString(6);
 
-    db[shortURL] = { longURL, userID, counter: 0, unique: [] };
+    db[shortURL] = { longURL, userID, counter: 0, unique: {} };
     return shortURL;
   },
 
@@ -21,7 +21,7 @@ const urlDatabase = {
     if (!db) db = this;
     const output = {};
     for (const url in db) {
-      if (db[url].userID === id) output[url] = db[url].longURL;
+      if (db[url].userID === id) output[url] = db[url];
     }
     return output;
   },
@@ -48,7 +48,13 @@ const urlDatabase = {
     }
   },
 
-  
+  countVisitors(shortURL, ip, db) {
+    if (!db) db = this;
+    
+    db[shortURL].counter++;
+    if (ip in db[shortURL].unique) return true;
+    db[shortURL].unique[ip] = new Date();
+  }
 };
 
 const users = {

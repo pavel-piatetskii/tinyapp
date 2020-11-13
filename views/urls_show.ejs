@@ -12,6 +12,7 @@
     <div class="card-body">
       <h5 class="card-title">TinyURL for <%= longURL %></h5>
       <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+      <p>Total visitors: <%= counter %> Unique visitors: <%= Object.keys(unique).length %></p>
     </div>
     <div class="card-footer text-muted">
       <h5 class="card-title">Edit</h5>
@@ -22,6 +23,23 @@
           <button type="submit" class="btn btn-primary">Submit</button>
         </div>
       </form>
+    </div>
+    <div>
+      <h5 style="margin: 10px;">List of unique visitors</h5>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col" style="width: 25%;">IP</th>
+            <th scope="col">Time of the first visit</th>
+          </tr>
+        </thead>
+      <% for (const ip in unique) { %>
+        <tr>
+          <td><%= ip %></td>
+          <td><%= unique[ip] %></td>
+        </tr>
+      <% } %>
+      </table>
     </div>
   </div>
   <!-- Bootstrap JS -->
