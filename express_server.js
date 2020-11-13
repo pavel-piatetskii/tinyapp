@@ -13,7 +13,7 @@ const urlDatabase = {
 
   addURL(longURL, userID) {
 
-    if (this.findLongURL) return false;
+    if (this.findLongURL(longURL)) return false;
 
     const shortURL = generateRandomString(6);
     while (shortURL in this) shortURL = generateRandomString(6);
@@ -93,28 +93,34 @@ app.use(bodyParser.urlencoded({extended: true}));
 const morgan = require('morgan');
 app.use(morgan('dev'));
 
-const cookie = require('cookie-parser');
-app.use(cookie());
+const cookieSession = require('cookie-session')
+app.use(cookieSession({
+  name: 'session',
+  keys: ['very-strong-and-unbreakable-secret-key-which-will-awe-all-hackers-around-the-world'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 
 const isLoggedMW = function(req, res, next) {
-  req.id = users.isUser(req.cookies['user_id']);
+  req.id = users.isUser(req.session.user_id);
   return (req.id) ? next() : res.redirect('/login');
 };
 
 const isAuthorizedMW = function(req, res, next) {
-  req.id = users.isUser(req.cookies['user_id']);
-  return (req.id) ? next() : res.redirect('//not-authorized');
+  req.id = users.isUser(req.session.user_id);
+  return (req.id) ? next() : res.redirect('/not-authorized');
 };
 
 // -------------------------- ROUTE HANDLERS -------------------------- //
 
 // --------- GET Handlers
 
-app.get('/', isLoggedMW, (req, res) => {                        // '/'
+app.get('/', isLoggedMW, (req, res) => {                    // '/'
   res.redirect('/urls');
 });
 
-app.get('/urls', isAuthorizedMW, (req, res) => {                    // '/urls'
+app.get('/urls', isAuthorizedMW, (req, res) => {            // '/urls'
   const templateVars = {
       urls: urlDatabase.urlsForUser(req.id),
       user: users[req.id],
@@ -122,14 +128,14 @@ app.get('/urls', isAuthorizedMW, (req, res) => {                    // '/urls'
   res.render('urls_index', templateVars);
 });
 
-app.get('/urls/new', isAuthorizedMW, (req, res) => {                // '/urls/new'
+app.get('/urls/new', isAuthorizedMW, (req, res) => {        // '/urls/new'
   const templateVars = {
     user: users[req.id]
   };
   res.render('urls_new', templateVars);
 });
 
-app.get('/urls/:shortURL', isAuthorizedMW, (req, res) => {          // '/urls/:shortURL'
+app.get('/urls/:shortURL', isAuthorizedMW, (req, res) => {  // '/urls/:shortURL'
   const { shortURL } = req.params;
   const url = urlDatabase[shortURL];
   if (!url || url.userID !== req.id) {
@@ -144,23 +150,23 @@ app.get('/urls/:shortURL', isAuthorizedMW, (req, res) => {          // '/urls/:s
   res.render('urls_show', templateVars);
 });
 
-app.get('/not-authorized', (req, res) => {
-  const id = req.cookies['user_id'];
+app.get('/not-authorized', (req, res) => {                  // Show if user tries to acces page that shows user-specific data 
+  const id = req.session.user_id;
   const templateVars = { 
     user: users[id]
   };
   res.render('not-authorized', templateVars)
 });
 
-app.get('/urls.json', (req, res) => {               // Return URL DB as JSON
+app.get('/urls.json', (req, res) => {                       // Return URL DB as JSON
   res.json(urlDatabase);
 });
 
-app.get('/users.json', (req, res) => {              // Return users DB as JSON
+app.get('/users.json', (req, res) => {                      // Return users DB as JSON
   res.json(users);
 });
 
-app.get("/u/:shortURL", (req, res) => {             // Redirection using short URL
+app.get("/u/:shortURL", (req, res) => {                     // Redirection using short URL
   if (req.params.shortURL in urlDatabase) {
     const { longURL } = urlDatabase[req.params.shortURL];
     res.redirect(longURL);
@@ -169,16 +175,17 @@ app.get("/u/:shortURL", (req, res) => {             // Redirection using short U
   res.end("Requested Tiny URL Not Found");
 });
 
-app.get('/login', (req, res) => {                   // '/login'
+app.get('/login', (req, res) => {                           // '/login'
+console.log(req.session)
   const templateVars = {
-    user: users[req.cookies['user_id']]
+    user: users[req.session.user_id]
   };
   res.render('login', templateVars);
 });
 
-app.get('/register', (req, res) => {                // '/register'
+app.get('/register', (req, res) => {                        // '/register'
   const templateVars = {
-    user: users[req.cookies['user_id']]
+    user: users[req.session.user_id]
 };
 res.render('register', templateVars);
 });
@@ -188,15 +195,16 @@ res.render('register', templateVars);
 app.post('/urls', (req, res) => {                   // new URL submition
 
   const longURL = req.body.longURL;
-  const id = req.cookies['user_id'];
+  const id = req.session.user_id;
   
   const shortURL = urlDatabase.addURL(longURL, id);
-  if (!shortURL) return res.status(400).send(`Tiny URL for this address exists: ${urlDatabase.findLongURL(longURL)}`)
-  res.redirect(`/urls/${shortURL}`)
+  if (shortURL) return res.redirect(`/urls/${shortURL}`);
+
+  return res.status(400).send(`Tiny URL for this address exists: ${urlDatabase.findLongURL(longURL)}`);
 });
 
 app.post('/urls/:shortURL', (req, res) => {         // change a long URL for short URL
-  const id = req.cookies['user_id'];
+  const id = req.session.user_id;
   const shortURL = req.params.shortURL;
   const newLongURL = req.body.longURL;
   urlDatabase.changeURL(shortURL, newLongURL, id);
@@ -205,7 +213,7 @@ app.post('/urls/:shortURL', (req, res) => {         // change a long URL for sho
 
 app.post('/urls/:shortURL/delete', (req, res) => {  // delete a short URL
   const shortURL = req.params.shortURL;
-  const id = req.cookies['user_id'];
+  const id = req.session.user_id;
   urlDatabase.deleteURL(shortURL, id);
   res.redirect('/urls');
 });
@@ -224,9 +232,9 @@ app.post('/login', (req, res) => {                  // User Login
   if (!id) {
     return res.status(403).send('E-mail and password do not match');
   }
-  
+
   if (bcrypt.compareSync(password, users[id].password)) {
-    res.cookie('user_id', id);
+    req.session.user_id = id;
     return res.redirect('/urls');
   }
   return res.status(403).send('E-mail and password do not match');
@@ -234,7 +242,7 @@ app.post('/login', (req, res) => {                  // User Login
 });
 
 app.post('/logout', (req, res) => {                 // User Logout
-  res.clearCookie('user_id');
+  req.session.user_id = null;
   res.redirect('/login');
 });
 
@@ -251,7 +259,7 @@ app.post('/register', (req, res) => {               // User Registration
 
   // Create new user in DB, assign a cookie and forward to URLs page
   const id = users.addUser({ email, password });
-  res.cookie('user_id', id);
+  req.session.user_id = id;
   res.redirect('/urls');
 });
 
