@@ -1,89 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcrypt')
 const app = express();
+const { users, urlDatabase } = require('./helpers-and-DBs')
+
 const PORT = 8080; // default port 8080
 
 app.set('view engine', 'ejs');
-
-// ---------------- Database-objects and helper functions ------------ //
-
-const urlDatabase = {
-  'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'test' },
-  '9sm5xK': { longURL: 'http://www.google.com', userID: 'test' },
-
-  addURL(longURL, userID) {
-
-    if (this.findLongURL(longURL)) return false;
-
-    const shortURL = generateRandomString(6);
-    while (shortURL in this) shortURL = generateRandomString(6);
-
-    this[shortURL] = { longURL, userID };
-    return shortURL;
-  },
-
-  urlsForUser(id) {
-    const output = {};
-    for (const url in this) {
-      if (this[url].userID === id) output[url] = this[url].longURL;
-    }
-    return output;
-  },
-
-  findLongURL(longURL) {
-    for (shortURL in this) {
-      if (this[shortURL].longURL === longURL) return shortURL;
-    }
-    return false;
-  },
-
-  changeURL(shortURL, newLongURL, id) {
-    if (this[shortURL].userID === id) {
-      this[shortURL].longURL = newLongURL;
-    }
-  },
-
-  deleteURL(shortURL, id) {
-    if (this[shortURL].userID === id) {
-      delete this[shortURL];
-    }
-  },
-};
-
-const users = {
-
-  'test': {id: 'test', email: 'a@b.c', password: '123'},
-
-  addUser(input) {
-    const id = generateRandomString(6);
-    while (id in this) id = generateRandomString(6);
-
-    let { email, password } = input;
-    password = bcrypt.hashSync(password, 10)
-    this[id] = { id, email, password };
-    return id;
-  },
-
-  findEmail(email) {
-    for (const user in this) {
-      if (users[user].email === email) return users[user].id;
-    }
-    return false;
-  },
-
-  isUser(id) {
-    return (id in this) ? id : false;
-  }
-};
-
-function generateRandomString(size) {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let output = '';
-  for (let i = 0; i < size; i++) {
-    output += charset[Math.floor(Math.random() * charset.length)];
-  }
-  return output;
-};
 
 // ----------------------- MIDDLEWARE ADDITIION ---------------------- //
 
@@ -169,14 +91,13 @@ app.get('/users.json', (req, res) => {                      // Return users DB a
 app.get("/u/:shortURL", (req, res) => {                     // Redirection using short URL
   if (req.params.shortURL in urlDatabase) {
     const { longURL } = urlDatabase[req.params.shortURL];
-    res.redirect(longURL);
+    return res.redirect(longURL);
   }
   res.statusCode = 404;
   res.end("Requested Tiny URL Not Found");
 });
 
 app.get('/login', (req, res) => {                           // '/login'
-console.log(req.session)
   const templateVars = {
     user: users[req.session.user_id]
   };
