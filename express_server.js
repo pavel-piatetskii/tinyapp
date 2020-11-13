@@ -1,5 +1,6 @@
 const express = require('express');
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
+var methodOverride = require('method-override');
 const app = express();
 const { users, urlDatabase } = require('./helpers-and-DBs')
 
@@ -12,9 +13,11 @@ app.set('view engine', 'ejs');
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
 
+// Morgan to monitor HTTP exchange
 const morgan = require('morgan');
 app.use(morgan('dev'));
 
+// Secure cookie-session with encryption
 const cookieSession = require('cookie-session')
 app.use(cookieSession({
   name: 'session',
@@ -24,6 +27,12 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
 
+// override with POST having ?_method=DELETE
+app.use(methodOverride('_method'))
+
+// -------- Custom Middleware
+
+// Next two extract user_id, but redirect to different pages
 const isLoggedMW = function(req, res, next) {
   req.id = users.isUser(req.session.user_id);
   return (req.id) ? next() : res.redirect('/login');
@@ -34,11 +43,20 @@ const isAuthorizedMW = function(req, res, next) {
   return (req.id) ? next() : res.redirect('/not-authorized');
 };
 
+// Check if the user owns given short URL
+const isOwnerOfShortMW = function(req, res, next) {
+  if (urlDatabase[req.params.shortURL].userID !== req.id) {
+    return res.redirect('/not-authorized');
+  }
+  return next();
+};
+
 // -------------------------- ROUTE HANDLERS -------------------------- //
 
 // --------- GET Handlers
 
 app.get('/', isLoggedMW, (req, res) => {                    // '/'
+  console.log(req.connection.remoteAddress.split(':').pop())
   res.redirect('/urls');
 });
 
@@ -50,7 +68,7 @@ app.get('/urls', isAuthorizedMW, (req, res) => {            // '/urls'
   res.render('urls_index', templateVars);
 });
 
-app.get('/urls/new', isAuthorizedMW, (req, res) => {        // '/urls/new'
+app.get('/urls/new', isLoggedMW, (req, res) => {        // '/urls/new'
   const templateVars = {
     user: users[req.id]
   };
@@ -101,6 +119,7 @@ app.get('/login', (req, res) => {                           // '/login'
   const templateVars = {
     user: users[req.session.user_id]
   };
+  if (templateVars.user) return res.redirect('/urls')
   res.render('login', templateVars);
 });
 
@@ -108,38 +127,39 @@ app.get('/register', (req, res) => {                        // '/register'
   const templateVars = {
     user: users[req.session.user_id]
 };
+if (templateVars.user) return res.redirect('/urls')
 res.render('register', templateVars);
 });
 
 // -------- POST handlers 
 
-app.post('/urls', (req, res) => {                   // new URL submition
-
-  const longURL = req.body.longURL;
-  const id = req.session.user_id;
-  
-  const shortURL = urlDatabase.addURL(longURL, id);
+app.post('/urls', isAuthorizedMW, (req, res) => {                     // new URL submition
+  const longURL = req.body.longURL;  
+  const shortURL = urlDatabase.addURL(longURL, req.id);
   if (shortURL) return res.redirect(`/urls/${shortURL}`);
 
   return res.status(400).send(`Tiny URL for this address exists: ${urlDatabase.findLongURL(longURL)}`);
 });
 
-app.post('/urls/:shortURL', (req, res) => {         // change a long URL for short URL
-  const id = req.session.user_id;
+app.put('/urls/:shortURL', isAuthorizedMW,                  // change a long URL for short URL
+isOwnerOfShortMW, (req, res) => {
   const shortURL = req.params.shortURL;
   const newLongURL = req.body.longURL;
-  urlDatabase.changeURL(shortURL, newLongURL, id);
+  // if (urlDatabase[shortURL].userID !== req.id) {
+  //   return res.redirect('/not-authorized');
+  // }
+  urlDatabase.changeURL(shortURL, newLongURL, req.id);
   res.redirect('/urls');
 });
 
-app.post('/urls/:shortURL/delete', (req, res) => {  // delete a short URL
+app.delete('/urls/:shortURL/delete', isAuthorizedMW,        // delete a short URL
+isOwnerOfShortMW,(req, res) => {  
   const shortURL = req.params.shortURL;
-  const id = req.session.user_id;
-  urlDatabase.deleteURL(shortURL, id);
+  urlDatabase.deleteURL(shortURL, req.id);
   res.redirect('/urls');
 });
 
-app.post('/login', (req, res) => {                  // User Login
+app.post('/login', (req, res) => {                    // User Login
   const { email, password } = req.body;
   
   // Return 'Bad request' if email/password fields are empty
@@ -162,12 +182,12 @@ app.post('/login', (req, res) => {                  // User Login
 
 });
 
-app.post('/logout', (req, res) => {                 // User Logout
-  req.session.user_id = null;
+app.post('/logout', (req, res) => {                   // User Logout
+  req.session = null;
   res.redirect('/login');
 });
 
-app.post('/register', (req, res) => {               // User Registration
+app.post('/register', (req, res) => {                 // User Registration
   const { email, password } = req.body;
 
   // Check if registration fields are empty or email is registred

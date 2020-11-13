@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 // ---------------- Database-objects and helper functions ------------ //
 
 const urlDatabase = {
-  'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'test' },
+  'b2xVn2': { longURL: 'http://www.lighthouselabs.ca', userID: 'test', counter: 0, unique: { 'ip': 'time'} },
   '9sm5xK': { longURL: 'http://www.google.com', userID: 'test' },
 
   addURL(longURL, userID, db) {
@@ -13,7 +13,7 @@ const urlDatabase = {
     const shortURL = generateRandomString(6);
     while (shortURL in db) shortURL = generateRandomString(6);
 
-    db[shortURL] = { longURL, userID };
+    db[shortURL] = { longURL, userID, counter: 0, unique: [] };
     return shortURL;
   },
 
@@ -47,6 +47,8 @@ const urlDatabase = {
       delete db[shortURL];
     }
   },
+
+  
 };
 
 const users = {
