@@ -100,14 +100,6 @@ app.get('/not-authorized', (req, res) => {        // Show if user tries to acces
   res.render('not-authorized', templateVars);
 });
 
-app.get('/urls.json', (req, res) => {             // Return URL DB as JSON
-  res.json(urlDatabase);
-});
-
-app.get('/users.json', (req, res) => {            // Return users DB as JSON
-  res.json(users);
-});
-
 app.get("/u/:shortURL", (req, res) => {           // Redirection using short URL
   const ip = req.connection.remoteAddress.split(':').pop();
   const shortURL = req.params.shortURL;
@@ -136,6 +128,9 @@ app.get('/register', (req, res) => {              // '/register'
   res.render('register', templateVars);
 });
 
+app.get('/:anythingElse', (req, res) => {         // General Error 404 handler
+  res.sendStatus(404);
+});
 // -------- POST handlers
 
 app.post('/urls', isAuthorizedMW, (req, res) => {     // new URL submition
